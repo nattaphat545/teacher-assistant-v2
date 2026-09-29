@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Assistant & Student Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Prompt', sans-serif; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="bg-indigo-600 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-graduation-cap text-2xl"></i>
+                    <span class="font-semibold text-xl" id="nav-title">Edu-Innovation Portal</span>
+                </div>
+                <div id="nav-user" class="hidden flex items-center gap-4">
+                    <span id="nav-user-name" class="font-medium"></span>
+                    <button onclick="logout()" class="text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition">ออกจากระบบ</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- AUTH VIEW -->
+    <div id="auth-view" class="view-section active max-w-4xl mx-auto mt-16 px-4">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-bold text-slate-800 mb-2">ยินดีต้อนรับสู่ระบบบริหารจัดการชั้นเรียน</h1>
+            <p class="text-slate-500">กรุณาเลือกสถานะเพื่อเข้าใช้งานระบบ</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- Teacher Login -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center hover:shadow-md transition cursor-pointer" onclick="loginTeacher()">
+                <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-2">สำหรับครูผู้สอน</h2>
+                <p class="text-slate-500 text-sm">เช็คชื่อ, บันทึกการสอน, ดูภาพรวม</p>
+            </div>
+            <!-- Student Login -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center relative group">
+                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+                    <i class="fa-solid fa-user-graduate"></i>
+                </div>
+                <h2 class="text-xl font-bold mb-2">สำหรับนักเรียน</h2>
+                <p class="text-slate-500 text-sm mb-4">ดูประวัติการเข้าเรียน, ดูบันทึกการเรียน</p>
+                
+                <div class="mt-4 text-left">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">เลือกชื่อของตนเองเพื่อเข้าระบบ</label>
+                    <select id="student-login-select" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                        <option value="">กำลังโหลดรายชื่อนักเรียน...</option>
+                    </select>
+                    <button onclick="loginStudent()" class="w-full mt-3 bg-emerald-600 text-white py-2 rounded-lg font-medium hover:bg-emerald-700 transition">เข้าสู่ระบบนักเรียน</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TEACHER VIEW -->
+    <div id="teacher-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Subject Selection -->
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 class="text-lg font-bold"><i class="fa-solid fa-book text-indigo-600 mr-2"></i> เลือกวิชาที่สอน:</h2>
+            <div class="flex gap-2">
+                <button onclick="setTeacherSubject('คณิตศาสตร์')" id="tsubject-math" class="px-4 py-2 rounded-lg font-medium bg-indigo-600 text-white">คณิตศาสตร์</button>
+                <button onclick="setTeacherSubject('คอมพิวเตอร์')" id="tsubject-comp" class="px-4 py-2 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">คอมพิวเตอร์</button>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Sidebar -->
+            <div class="w-full md:w-64 flex-shrink-0">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex flex-col gap-2">
+                    <button onclick="switchTeacherTab('dashboard')" id="tbtn-dashboard" class="text-left px-4 py-3 rounded-lg bg-indigo-50 text-indigo-700 font-medium transition-colors">
+                        <i class="fa-solid fa-chart-pie w-6"></i> ภาพรวมวิชา
+                    </button>
+                    <button onclick="switchTeacherTab('attendance')" id="tbtn-attendance" class="text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50">
+                        <i class="fa-solid fa-clipboard-user w-6"></i> ระบบเช็คชื่อ
+                    </button>
+                    <button onclick="switchTeacherTab('teaching-log')" id="tbtn-teaching-log" class="text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50">
+                        <i class="fa-solid fa-book-open w-6"></i> จัดการบันทึกการสอน
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1">
+                <!-- Teacher Dashboard -->
+                <div id="ttab-dashboard" class="tab-content active">
+                    <h2 class="text-2xl font-bold mb-6">ภาพรวมชั้นเรียน <span id="dash-subject" class="text-indigo-600">คณิตศาสตร์</span> (วันนี้)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-users"></i></div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">นักเรียนทั้งหมด</p>
+                                <p class="text-2xl font-bold" id="tstat-total">0</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-check"></i></div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">มาเรียน</p>
+                                <p class="text-2xl font-bold text-green-600" id="tstat-present">0</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-xmark"></i></div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">ขาดเรียน</p>
+                                <p class="text-2xl font-bold text-red-600" id="tstat-absent">0</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clock"></i></div>
+                            <div>
+                                <p class="text-sm text-slate-500 font-medium">สาย / ลา</p>
+                                <p class="text-2xl font-bold text-yellow-600" id="tstat-other">0</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teacher Attendance -->
+                <div id="ttab-attendance" class="tab-content">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">เช็คชื่อวิชา <span id="att-subject" class="text-indigo-600">คณิตศาสตร์</span></h2>
+                        <input type="date" id="att-date" class="border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none" onchange="loadTeacherAttendance()">
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto max-h-[60vh] overflow-y-auto">
+                        <table class="w-full text-left border-collapse min-w-[600px] relative">
+                            <thead class="sticky top-0 bg-slate-50 z-10 shadow-sm">
+                                <tr>
+                                    <th class="py-3 px-6 font-medium text-slate-600">เลขที่</th>
+                                    <th class="py-3 px-6 font-medium text-slate-600">ชื่อ - นามสกุล</th>
+                                    <th class="py-3 px-6 font-medium text-slate-600 text-center">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tstudent-list">
+                                <tr><td colspan="3" class="text-center py-4">กำลังโหลดข้อมูล...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-6 flex justify-end">
+                        <button onclick="saveAttendance()" id="btn-save-attendance" class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition shadow-sm">
+                            <i class="fa-solid fa-save mr-2"></i> บันทึกการเข้าเรียน
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Teacher Teaching Logs -->
+                <div id="ttab-teaching-log" class="tab-content">
+                    <h2 class="text-2xl font-bold mb-6">บันทึกการสอนวิชา <span id="log-subject-display" class="text-indigo-600">คณิตศาสตร์</span></h2>
+                    
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-8">
+                        <h3 class="font-bold text-lg mb-4" id="log-form-title">เพิ่มบันทึกใหม่</h3>
+                        <form id="teaching-form" class="flex flex-col gap-4" onsubmit="saveTeachingLog(event)">
+                            <input type="hidden" id="log-id">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">วันที่สอน</label>
+                                <input type="date" id="log-date" required class="w-full md:w-1/3 border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">หัวข้อที่สอน / เนื้อหา</label>
+                                <textarea id="log-topic" required rows="3" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">ปัญหา / หมายเหตุ</label>
+                                <input type="text" id="log-notes" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+                            <div class="flex justify-end gap-2 mt-2">
+                                <button type="button" onclick="resetLogForm()" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">ยกเลิก/ล้างฟอร์ม</button>
+                                <button type="submit" id="btn-save-log" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition shadow-sm">
+                                    <i class="fa-solid fa-save mr-2"></i> บันทึกข้อมูล
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <h3 class="font-bold text-lg mb-4">ประวัติการสอน</h3>
+                    <div id="tlog-history" class="grid gap-4">
+                        <!-- Logs render here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STUDENT VIEW -->
+    <div id="student-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+                <h2 class="text-2xl font-bold text-slate-800">ข้อมูลของฉัน</h2>
+                <p class="text-emerald-600 font-medium text-lg" id="s-name-display"></p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="setStudentSubject('คณิตศาสตร์')" id="ssubject-math" class="px-4 py-2 rounded-lg font-medium bg-emerald-600 text-white">คณิตศาสตร์</button>
+                <button onclick="setStudentSubject('คอมพิวเตอร์')" id="ssubject-comp" class="px-4 py-2 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">คอมพิวเตอร์</button>
+            </div>
+        </div>
+
+        <div class="flex flex-col md:flex-row gap-6">
+            <!-- Sidebar -->
+            <div class="w-full md:w-64 flex-shrink-0">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex flex-col gap-2">
+                    <button onclick="switchStudentTab('attendance')" id="sbtn-attendance" class="text-left px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 font-medium transition-colors">
+                        <i class="fa-solid fa-calendar-check w-6"></i> ประวัติเข้าเรียน
+                    </button>
+                    <button onclick="switchStudentTab('logs')" id="sbtn-logs" class="text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50">
+                        <i class="fa-solid fa-book w-6"></i> บันทึกการเรียน (เนื้อหา)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="flex-1">
+                <!-- My Attendance -->
+                <div id="stab-attendance" class="tab-content active">
+                    <h2 class="text-xl font-bold mb-4">ประวัติการเข้าเรียนวิชา <span id="s-att-subject" class="text-emerald-600">คณิตศาสตร์</span></h2>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="py-3 px-6 font-medium text-slate-600">วันที่</th>
+                                    <th class="py-3 px-6 font-medium text-slate-600">สถานะ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="s-att-list">
+                                <tr><td colspan="2" class="text-center py-4">กำลังโหลด...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- My Class Logs -->
+                <div id="stab-logs" class="tab-content">
+                    <h2 class="text-xl font-bold mb-4">เนื้อหาที่เรียนวิชา <span id="s-log-subject" class="text-emerald-600">คณิตศาสตร์</span></h2>
+                    <div id="s-log-list" class="grid gap-4">
+                        <!-- Student Logs render here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2 z-50">
+        <i class="fa-solid fa-circle-check"></i> <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        // Supabase Config
+        const SUPABASE_URL = 'https://inepufnwfdccwsyablws.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluZXB1Zm53ZmRjY3dzeWFibHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2ODE4NjQsImV4cCI6MjEwNjI1Nzg2NH0.BTR4d5BNi7I-_m8SQvyCCqNIul2AeNIIF02OvDUDuMw';
+        
+        // BUG FIX: changed variable name from 'supabase' to 'db' to prevent shadowing the global 'supabase' object from CDN.
+        const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Global State
+        let allStudents = [];
+        let teacherSubject = 'คณิตศาสตร์';
+        let studentSubject = 'คณิตศาสตร์';
+        let currentStudentId = null;
+        let attendanceState = {}; // { student_id: status }
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        document.getElementById('att-date').value = todayStr;
+        document.getElementById('log-date').value = todayStr;
+
+        // Init
+        async function initApp() {
+            try {
+                const { data, error } = await db.from('students').select('*').order('student_number');
+                if (error) throw error;
+                allStudents = data || [];
+                
+                // Populate student dropdown
+                const select = document.getElementById('student-login-select');
+                select.innerHTML = '<option value="">-- เลือกชื่อของตนเอง --</option>' + 
+                    allStudents.map(s => `<option value="${s.id}">เลขที่ ${s.student_number} ${s.name}</option>`).join('');
+            } catch (e) {
+                console.error("Init Error:", e);
+                alert("ไม่สามารถโหลดข้อมูลฐานข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่อ");
+            }
+        }
+        
+        // Start app
+        initApp();
+
+        // --- AUTH & ROLES ---
+        function loginTeacher() {
+            document.getElementById('auth-view').classList.remove('active');
+            document.getElementById('teacher-view').classList.add('active');
+            document.getElementById('nav-user').classList.remove('hidden');
+            document.getElementById('nav-user-name').innerHTML = '<i class="fa-solid fa-chalkboard-user mr-1"></i> ระบบครูผู้สอน';
+            document.getElementById('nav-title').textContent = 'Teacher Portal';
+            loadTeacherDashboard();
+            loadTeacherAttendance();
+            loadTeacherLogs();
+        }
+
+        function loginStudent() {
+            const sid = document.getElementById('student-login-select').value;
+            if (!sid) return alert("กรุณาเลือกชื่อนักเรียนก่อน");
+            currentStudentId = parseInt(sid);
+            const std = allStudents.find(s => s.id === currentStudentId);
+
+            document.getElementById('auth-view').classList.remove('active');
+            document.getElementById('student-view').classList.add('active');
+            document.getElementById('nav-user').classList.remove('hidden');
+            document.getElementById('nav-user-name').innerHTML = `<i class="fa-solid fa-user-graduate mr-1"></i> นักเรียน: ${std.name}`;
+            document.getElementById('nav-title').textContent = 'Student Portal';
+            document.getElementById('s-name-display').textContent = `เลขที่ ${std.student_number} - ${std.name}`;
+            
+            loadStudentAttendance();
+            loadStudentLogs();
+        }
+
+        function logout() {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+            document.getElementById('auth-view').classList.add('active');
+            document.getElementById('nav-user').classList.add('hidden');
+            document.getElementById('nav-title').textContent = 'Edu-Innovation Portal';
+            currentStudentId = null;
+        }
+
+        // --- TEACHER VIEW LOGIC ---
+        function setTeacherSubject(subj) {
+            teacherSubject = subj;
+            document.getElementById('tsubject-math').className = `px-4 py-2 rounded-lg font-medium ${subj==='คณิตศาสตร์'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+            document.getElementById('tsubject-comp').className = `px-4 py-2 rounded-lg font-medium ${subj==='คอมพิวเตอร์'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+            
+            document.getElementById('dash-subject').textContent = subj;
+            document.getElementById('att-subject').textContent = subj;
+            document.getElementById('log-subject-display').textContent = subj;
+            
+            loadTeacherDashboard();
+            loadTeacherAttendance();
+            loadTeacherLogs();
+        }
+
+        function switchTeacherTab(tabId) {
+            document.querySelectorAll('#teacher-view .tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('[id^="tbtn-"]').forEach(btn => btn.className = "text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50");
+            document.getElementById('ttab-' + tabId).classList.add('active');
+            document.getElementById('tbtn-' + tabId).className = "text-left px-4 py-3 rounded-lg bg-indigo-50 text-indigo-700 font-medium transition-colors hover:bg-indigo-50";
+            if(tabId === 'dashboard') loadTeacherDashboard();
+        }
+
+        async function loadTeacherAttendance() {
+            const date = document.getElementById('att-date').value;
+            attendanceState = {};
+            try {
+                const { data } = await db.from('attendance').select('*').eq('date', date).eq('subject', teacherSubject);
+                if (data) {
+                    data.forEach(d => attendanceState[d.student_id] = d.status);
+                }
+                renderTeacherStudentList();
+            } catch (e) { console.error(e); }
+        }
+
+        function renderTeacherStudentList() {
+            const tbody = document.getElementById('tstudent-list');
+            tbody.innerHTML = allStudents.map(s => {
+                if (!attendanceState[s.id]) attendanceState[s.id] = 'present';
+                const status = attendanceState[s.id];
+                return `
+                <tr class="border-b border-slate-100 hover:bg-slate-50">
+                    <td class="py-2 px-6 text-slate-600 font-medium">${s.student_number}</td>
+                    <td class="py-2 px-6">${s.name}</td>
+                    <td class="py-2 px-6 flex justify-center gap-1">
+                        <button onclick="setTStatus(${s.id}, 'present')" class="px-3 py-1 rounded text-sm font-medium transition ${status === 'present' ? 'bg-green-600 text-white' : 'bg-green-50 text-green-700'}">มา</button>
+                        <button onclick="setTStatus(${s.id}, 'absent')" class="px-3 py-1 rounded text-sm font-medium transition ${status === 'absent' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700'}">ขาด</button>
+                        <button onclick="setTStatus(${s.id}, 'late')" class="px-3 py-1 rounded text-sm font-medium transition ${status === 'late' ? 'bg-yellow-500 text-white' : 'bg-yellow-50 text-yellow-700'}">สาย</button>
+                        <button onclick="setTStatus(${s.id}, 'leave')" class="px-3 py-1 rounded text-sm font-medium transition ${status === 'leave' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'}">ลา</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function setTStatus(id, stat) {
+            attendanceState[id] = stat;
+            renderTeacherStudentList();
+        }
+
+        async function saveAttendance() {
+            const date = document.getElementById('att-date').value;
+            const records = allStudents.map(s => ({
+                student_id: s.id, date: date, subject: teacherSubject, status: attendanceState[s.id]
+            }));
+            
+            try {
+                await db.from('attendance').delete().eq('date', date).eq('subject', teacherSubject);
+                await db.from('attendance').insert(records);
+                showToast('บันทึกการเข้าเรียนสำเร็จ');
+                loadTeacherDashboard();
+            } catch(e) { console.error(e); showToast('ผิดพลาด', true); }
+        }
+
+        async function loadTeacherDashboard() {
+            document.getElementById('tstat-total').textContent = allStudents.length;
+            const date = document.getElementById('att-date').value;
+            try {
+                const { data } = await db.from('attendance').select('status').eq('date', date).eq('subject', teacherSubject);
+                if (data && data.length > 0) {
+                    document.getElementById('tstat-present').textContent = data.filter(d => d.status === 'present').length;
+                    document.getElementById('tstat-absent').textContent = data.filter(d => d.status === 'absent').length;
+                    document.getElementById('tstat-other').textContent = data.filter(d => d.status === 'late' || d.status === 'leave').length;
+                } else {
+                    ['tstat-present','tstat-absent','tstat-other'].forEach(id => document.getElementById(id).textContent = 0);
+                }
+            } catch(e) {}
+        }
+
+        async function loadTeacherLogs() {
+            try {
+                const { data } = await db.from('teaching_logs').select('*').eq('subject', teacherSubject).order('date', {ascending: false});
+                const container = document.getElementById('tlog-history');
+                if(!data || data.length===0) {
+                    container.innerHTML = '<p class="text-slate-500">ยังไม่มีบันทึกการสอน</p>'; return;
+                }
+                container.innerHTML = data.map(log => {
+                    const escTopic = log.topic.replace(/'/g, "\\'");
+                    const escNotes = (log.notes||'').replace(/'/g, "\\'");
+                    return `
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative group">
+                        <div class="flex justify-between mb-2">
+                            <span class="font-bold text-indigo-700">${log.date}</span>
+                            <div>
+                                <button onclick="editLog(${log.id}, '${log.date}', '${escTopic}', '${escNotes}')" class="text-slate-400 hover:text-indigo-600 mr-2"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteLog(${log.id})" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+                            </div>
+                        </div>
+                        <h4 class="font-bold text-lg mb-1">${log.topic}</h4>
+                        <p class="text-slate-600 text-sm">${log.notes || '-'}</p>
+                    </div>
+                `}).join('');
+            } catch(e) {}
+        }
+
+        function editLog(id, date, topic, notes) {
+            document.getElementById('log-id').value = id;
+            document.getElementById('log-date').value = date;
+            document.getElementById('log-topic').value = topic;
+            document.getElementById('log-notes').value = notes;
+            document.getElementById('log-form-title').textContent = "แก้ไขบันทึก";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetLogForm() {
+            document.getElementById('teaching-form').reset();
+            document.getElementById('log-id').value = '';
+            document.getElementById('log-date').value = todayStr;
+            document.getElementById('log-form-title').textContent = "เพิ่มบันทึกใหม่";
+        }
+
+        async function saveTeachingLog(e) {
+            e.preventDefault();
+            const id = document.getElementById('log-id').value;
+            const logData = {
+                date: document.getElementById('log-date').value,
+                subject: teacherSubject,
+                topic: document.getElementById('log-topic').value,
+                notes: document.getElementById('log-notes').value
+            };
+            try {
+                if(id) { await db.from('teaching_logs').update(logData).eq('id', id); }
+                else { await db.from('teaching_logs').insert([logData]); }
+                showToast('บันทึกสำเร็จ');
+                resetLogForm();
+                loadTeacherLogs();
+            } catch(e) { showToast('ผิดพลาด', true); }
+        }
+
+        async function deleteLog(id) {
+            if(confirm("ต้องการลบข้อบันทึกนี้หรือไม่?")) {
+                await db.from('teaching_logs').delete().eq('id', id);
+                showToast('ลบสำเร็จ');
+                loadTeacherLogs();
+            }
+        }
+
+        // --- STUDENT VIEW LOGIC ---
+        function setStudentSubject(subj) {
+            studentSubject = subj;
+            document.getElementById('ssubject-math').className = `px-4 py-2 rounded-lg font-medium ${subj==='คณิตศาสตร์'?'bg-emerald-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+            document.getElementById('ssubject-comp').className = `px-4 py-2 rounded-lg font-medium ${subj==='คอมพิวเตอร์'?'bg-emerald-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+            document.getElementById('s-att-subject').textContent = subj;
+            document.getElementById('s-log-subject').textContent = subj;
+            loadStudentAttendance();
+            loadStudentLogs();
+        }
+
+        function switchStudentTab(tabId) {
+            document.querySelectorAll('#student-view .tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('[id^="sbtn-"]').forEach(btn => btn.className = "text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50");
+            document.getElementById('stab-' + tabId).classList.add('active');
+            document.getElementById('sbtn-' + tabId).className = "text-left px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 font-medium transition-colors";
+        }
+
+        async function loadStudentAttendance() {
+            const tbody = document.getElementById('s-att-list');
+            try {
+                const { data } = await db.from('attendance').select('*').eq('student_id', currentStudentId).eq('subject', studentSubject).order('date', {ascending: false});
+                if(!data || data.length===0) {
+                    tbody.innerHTML = `<tr><td colspan="2" class="text-center py-4 text-slate-500">ไม่มีประวัติ</td></tr>`; return;
+                }
+                const badges = {
+                    'present': '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">มาเรียน</span>',
+                    'absent': '<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">ขาด</span>',
+                    'late': '<span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">สาย</span>',
+                    'leave': '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">ลา</span>'
+                };
+                tbody.innerHTML = data.map(d => `
+                    <tr class="border-b border-slate-100 hover:bg-slate-50">
+                        <td class="py-3 px-6 font-medium">${d.date}</td>
+                        <td class="py-3 px-6">${badges[d.status]}</td>
+                    </tr>
+                `).join('');
+            } catch(e) {}
+        }
+
+        async function loadStudentLogs() {
+            const container = document.getElementById('s-log-list');
+            try {
+                const { data } = await db.from('teaching_logs').select('*').eq('subject', studentSubject).order('date', {ascending: false});
+                if(!data || data.length===0) {
+                    container.innerHTML = '<p class="text-slate-500">ไม่มีข้อมูลเนื้อหา</p>'; return;
+                }
+                container.innerHTML = data.map(log => `
+                    <div class="bg-white p-5 rounded-xl border border-emerald-100 shadow-sm">
+                        <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">${log.date}</span>
+                        <h4 class="font-bold text-lg mt-3 mb-2">${log.topic}</h4>
+                        <p class="text-slate-600 text-sm"><i class="fa-solid fa-circle-info text-slate-400 mr-1"></i> ${log.notes || '-'}</p>
+                    </div>
+                `).join('');
+            } catch(e) {}
+        }
+
+        // Toasts
+        function showToast(msg, error=false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').textContent = msg;
+            toast.className = `fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg transform flex items-center gap-2 z-50 transition-all duration-300 ${error?'bg-red-600':'bg-green-600'} translate-y-0 opacity-100`;
+            setTimeout(() => { toast.classList.remove('translate-y-0', 'opacity-100'); toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        }
+    </script>
+</body>
+</html>
