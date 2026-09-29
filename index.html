@@ -3,270 +3,380 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Assistant & Student Portal</title>
+    <title>Edu-Innovation Portal | วิทยาลัยพณิชยการเชตุพน</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SweetAlert2 (For beautiful popups and alerts) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Animate.css (For animations) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
-        body { font-family: 'Prompt', sans-serif; }
+        body { 
+            font-family: 'Prompt', sans-serif; 
+            /* Beautiful gradient background */
+            background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+            background-attachment: fixed;
+        }
         .view-section { display: none; }
         .view-section.active { display: block; }
         .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        /* Add smooth fade in for tabs */
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
+<body class="text-slate-800 flex flex-col min-h-screen">
 
     <!-- Navbar -->
-    <nav class="bg-indigo-600 text-white shadow-lg">
+    <nav class="bg-indigo-700 text-white shadow-xl sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-graduation-cap text-2xl"></i>
-                    <span class="font-semibold text-xl" id="nav-title">Edu-Innovation Portal</span>
+                <div class="flex items-center gap-3 animate__animated animate__fadeInLeft">
+                    <div class="bg-white/20 p-2 rounded-lg">
+                        <i class="fa-solid fa-graduation-cap text-2xl"></i>
+                    </div>
+                    <span class="font-semibold text-xl tracking-wide" id="nav-title">Edu-Innovation Portal</span>
                 </div>
-                <div id="nav-user" class="hidden flex items-center gap-4">
-                    <span id="nav-user-name" class="font-medium"></span>
-                    <button onclick="logout()" class="text-sm bg-white/20 hover:bg-white/30 px-3 py-1 rounded transition">ออกจากระบบ</button>
+                <div id="nav-user" class="hidden flex items-center gap-4 animate__animated animate__fadeInRight">
+                    <span id="nav-user-name" class="font-medium bg-indigo-800 px-4 py-1.5 rounded-full shadow-inner"></span>
+                    <button onclick="logout()" class="text-sm bg-red-500 hover:bg-red-600 px-4 py-1.5 rounded-full font-medium transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                        <i class="fa-solid fa-right-from-bracket mr-1"></i> ออกจากระบบ
+                    </button>
                 </div>
             </div>
         </div>
     </nav>
 
-    <!-- AUTH VIEW -->
-    <div id="auth-view" class="view-section active max-w-4xl mx-auto mt-16 px-4">
-        <div class="text-center mb-10">
-            <h1 class="text-3xl font-bold text-slate-800 mb-2">ยินดีต้อนรับสู่ระบบบริหารจัดการชั้นเรียน</h1>
-            <p class="text-slate-500">กรุณาเลือกสถานะเพื่อเข้าใช้งานระบบ</p>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- Teacher Login -->
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center hover:shadow-md transition cursor-pointer" onclick="loginTeacher()">
-                <div class="w-20 h-20 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
-                    <i class="fa-solid fa-chalkboard-user"></i>
-                </div>
-                <h2 class="text-xl font-bold mb-2">สำหรับครูผู้สอน</h2>
-                <p class="text-slate-500 text-sm">เช็คชื่อ, บันทึกการสอน, ดูภาพรวม</p>
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow">
+        <!-- AUTH VIEW -->
+        <div id="auth-view" class="view-section active max-w-5xl mx-auto mt-12 px-4 animate__animated animate__zoomIn">
+            <div class="text-center mb-12">
+                <h1 class="text-4xl font-bold text-indigo-900 mb-4 drop-shadow-sm">ยินดีต้อนรับสู่ระบบบริหารจัดการชั้นเรียน</h1>
+                <p class="text-slate-600 text-lg">วิทยาลัยพณิชยการเชตุพน | นวัตกรรมเพื่อการศึกษา</p>
             </div>
-            <!-- Student Login -->
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center relative group">
-                <div class="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
-                    <i class="fa-solid fa-user-graduate"></i>
-                </div>
-                <h2 class="text-xl font-bold mb-2">สำหรับนักเรียน</h2>
-                <p class="text-slate-500 text-sm mb-4">ดูประวัติการเข้าเรียน, ดูบันทึกการเรียน</p>
-                
-                <div class="mt-4 text-left">
-                    <label class="block text-sm font-medium text-slate-700 mb-1">เลือกชื่อของตนเองเพื่อเข้าระบบ</label>
-                    <select id="student-login-select" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
-                        <option value="">กำลังโหลดรายชื่อนักเรียน...</option>
-                    </select>
-                    <button onclick="loginStudent()" class="w-full mt-3 bg-emerald-600 text-white py-2 rounded-lg font-medium hover:bg-emerald-700 transition">เข้าสู่ระบบนักเรียน</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- TEACHER VIEW -->
-    <div id="teacher-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Subject Selection -->
-        <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 class="text-lg font-bold"><i class="fa-solid fa-book text-indigo-600 mr-2"></i> เลือกวิชาที่สอน:</h2>
-            <div class="flex gap-2">
-                <button onclick="setTeacherSubject('คณิตศาสตร์')" id="tsubject-math" class="px-4 py-2 rounded-lg font-medium bg-indigo-600 text-white">คณิตศาสตร์</button>
-                <button onclick="setTeacherSubject('คอมพิวเตอร์')" id="tsubject-comp" class="px-4 py-2 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">คอมพิวเตอร์</button>
-            </div>
-        </div>
-
-        <div class="flex flex-col md:flex-row gap-6">
-            <!-- Sidebar -->
-            <div class="w-full md:w-64 flex-shrink-0">
-                <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex flex-col gap-2">
-                    <button onclick="switchTeacherTab('dashboard')" id="tbtn-dashboard" class="text-left px-4 py-3 rounded-lg bg-indigo-50 text-indigo-700 font-medium transition-colors">
-                        <i class="fa-solid fa-chart-pie w-6"></i> ภาพรวมวิชา
-                    </button>
-                    <button onclick="switchTeacherTab('attendance')" id="tbtn-attendance" class="text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50">
-                        <i class="fa-solid fa-clipboard-user w-6"></i> ระบบเช็คชื่อ
-                    </button>
-                    <button onclick="switchTeacherTab('teaching-log')" id="tbtn-teaching-log" class="text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50">
-                        <i class="fa-solid fa-book-open w-6"></i> จัดการบันทึกการสอน
-                    </button>
-                </div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="flex-1">
-                <!-- Teacher Dashboard -->
-                <div id="ttab-dashboard" class="tab-content active">
-                    <h2 class="text-2xl font-bold mb-6">ภาพรวมชั้นเรียน <span id="dash-subject" class="text-indigo-600">คณิตศาสตร์</span> (วันนี้)</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-users"></i></div>
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium">นักเรียนทั้งหมด</p>
-                                <p class="text-2xl font-bold" id="tstat-total">0</p>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                            <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-check"></i></div>
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium">มาเรียน</p>
-                                <p class="text-2xl font-bold text-green-600" id="tstat-present">0</p>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-xmark"></i></div>
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium">ขาดเรียน</p>
-                                <p class="text-2xl font-bold text-red-600" id="tstat-absent">0</p>
-                            </div>
-                        </div>
-                        <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center gap-4">
-                            <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-xl shrink-0"><i class="fa-solid fa-clock"></i></div>
-                            <div>
-                                <p class="text-sm text-slate-500 font-medium">สาย / ลา</p>
-                                <p class="text-2xl font-bold text-yellow-600" id="tstat-other">0</p>
-                            </div>
-                        </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <!-- Teacher Login Card -->
+                <div onclick="attemptTeacherLogin()" class="glass p-10 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer group">
+                    <div class="w-24 h-24 bg-gradient-to-br from-indigo-400 to-indigo-600 text-white rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-lg group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-center mb-3 text-indigo-900">สำหรับครูผู้สอน</h2>
+                    <p class="text-slate-500 text-center">จัดการชั้นเรียน, เช็คชื่อ, อนุมัติใบลา, บันทึกการสอน</p>
+                    <div class="mt-6 text-center">
+                        <span class="inline-block bg-indigo-50 text-indigo-600 px-4 py-2 rounded-full text-sm font-medium">คลิกเพื่อเข้าสู่ระบบ</span>
                     </div>
                 </div>
 
-                <!-- Teacher Attendance -->
-                <div id="ttab-attendance" class="tab-content">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-2xl font-bold">เช็คชื่อวิชา <span id="att-subject" class="text-indigo-600">คณิตศาสตร์</span></h2>
-                        <input type="date" id="att-date" class="border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-indigo-500 outline-none" onchange="loadTeacherAttendance()">
+                <!-- Student Login Card -->
+                <div class="glass p-10 rounded-3xl shadow-xl hover:shadow-2xl transition-all duration-300">
+                    <div class="w-24 h-24 bg-gradient-to-br from-emerald-400 to-emerald-600 text-white rounded-full flex items-center justify-center text-5xl mx-auto mb-6 shadow-lg">
+                        <i class="fa-solid fa-user-graduate"></i>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-x-auto max-h-[60vh] overflow-y-auto">
-                        <table class="w-full text-left border-collapse min-w-[600px] relative">
-                            <thead class="sticky top-0 bg-slate-50 z-10 shadow-sm">
-                                <tr>
-                                    <th class="py-3 px-6 font-medium text-slate-600">เลขที่</th>
-                                    <th class="py-3 px-6 font-medium text-slate-600">ชื่อ - นามสกุล</th>
-                                    <th class="py-3 px-6 font-medium text-slate-600 text-center">สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="tstudent-list">
-                                <tr><td colspan="3" class="text-center py-4">กำลังโหลดข้อมูล...</td></tr>
-                            </tbody>
-                        </table>
+                    <h2 class="text-2xl font-bold text-center mb-3 text-emerald-900">สำหรับนักเรียน</h2>
+                    <p class="text-slate-500 text-center mb-6">ดูประวัติเข้าเรียน, ยื่นใบลา, ทบทวนบทเรียน</p>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">เลือกชื่อของตนเอง</label>
+                            <select id="student-login-select" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-0 focus:border-emerald-500 outline-none transition-colors">
+                                <option value="">กำลังโหลดรายชื่อ...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">รหัสผ่าน (ใช้ 1234 สำหรับทดสอบ)</label>
+                            <input type="password" id="student-login-password" placeholder="••••" class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-0 focus:border-emerald-500 outline-none transition-colors">
+                        </div>
+                        <button onclick="attemptStudentLogin()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white py-3 rounded-xl font-bold text-lg hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+                            เข้าสู่ระบบนักเรียน
+                        </button>
                     </div>
-                    <div class="mt-6 flex justify-end">
-                        <button onclick="saveAttendance()" id="btn-save-attendance" class="bg-indigo-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-indigo-700 transition shadow-sm">
-                            <i class="fa-solid fa-save mr-2"></i> บันทึกการเข้าเรียน
+                </div>
+            </div>
+        </div>
+
+        <!-- TEACHER VIEW -->
+        <div id="teacher-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate__animated animate__fadeIn">
+            <!-- Subject Selection -->
+            <div class="glass p-5 rounded-2xl shadow-md mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4 border-l-4 border-indigo-600">
+                <h2 class="text-xl font-bold text-indigo-900"><i class="fa-solid fa-book text-indigo-600 mr-2"></i> เลือกรายวิชาที่กำลังจัดการ:</h2>
+                <div class="flex gap-3 bg-slate-100 p-1.5 rounded-xl">
+                    <button onclick="setTeacherSubject('คณิตศาสตร์')" id="tsubject-math" class="px-6 py-2.5 rounded-lg font-bold bg-indigo-600 text-white shadow-md transition-all">คณิตศาสตร์</button>
+                    <button onclick="setTeacherSubject('คอมพิวเตอร์')" id="tsubject-comp" class="px-6 py-2.5 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition-all">คอมพิวเตอร์</button>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Sidebar -->
+                <div class="w-full lg:w-72 flex-shrink-0">
+                    <div class="glass rounded-2xl shadow-md p-5 flex flex-col gap-3 sticky top-24">
+                        <button onclick="switchTeacherTab('dashboard')" id="tbtn-dashboard" class="text-left px-5 py-4 rounded-xl bg-indigo-50 text-indigo-700 font-bold transition-all flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center"><i class="fa-solid fa-chart-pie"></i></div> ภาพรวมวิชา
+                        </button>
+                        <button onclick="switchTeacherTab('attendance')" id="tbtn-attendance" class="text-left px-5 py-4 rounded-xl text-slate-600 font-bold transition-all hover:bg-slate-50 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-clipboard-user"></i></div> ระบบเช็คชื่อ
+                        </button>
+                        <button onclick="switchTeacherTab('leaves')" id="tbtn-leaves" class="text-left px-5 py-4 rounded-xl text-slate-600 font-bold transition-all hover:bg-slate-50 flex items-center gap-3 relative">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-envelope-open-text"></i></div> 
+                            คำร้องขอลา 
+                            <span id="t-leave-badge" class="absolute right-4 bg-red-500 text-white text-xs px-2 py-1 rounded-full hidden">0</span>
+                        </button>
+                        <button onclick="switchTeacherTab('teaching-log')" id="tbtn-teaching-log" class="text-left px-5 py-4 rounded-xl text-slate-600 font-bold transition-all hover:bg-slate-50 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-book-open"></i></div> บันทึกการสอน
                         </button>
                     </div>
                 </div>
 
-                <!-- Teacher Teaching Logs -->
-                <div id="ttab-teaching-log" class="tab-content">
-                    <h2 class="text-2xl font-bold mb-6">บันทึกการสอนวิชา <span id="log-subject-display" class="text-indigo-600">คณิตศาสตร์</span></h2>
-                    
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-6 mb-8">
-                        <h3 class="font-bold text-lg mb-4" id="log-form-title">เพิ่มบันทึกใหม่</h3>
-                        <form id="teaching-form" class="flex flex-col gap-4" onsubmit="saveTeachingLog(event)">
-                            <input type="hidden" id="log-id">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">วันที่สอน</label>
-                                <input type="date" id="log-date" required class="w-full md:w-1/3 border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <!-- Main Content -->
+                <div class="flex-1">
+                    <!-- Dashboard -->
+                    <div id="ttab-dashboard" class="tab-content active">
+                        <h2 class="text-3xl font-bold mb-8 text-indigo-900">ภาพรวม <span id="dash-subject" class="text-indigo-600 border-b-2 border-indigo-600">คณิตศาสตร์</span> วันนี้</h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                            <div class="glass p-6 rounded-2xl shadow-sm border-t-4 border-blue-500 hover:shadow-md transition-all transform hover:-translate-y-1">
+                                <p class="text-sm text-slate-500 font-bold mb-1">นักเรียนทั้งหมด</p>
+                                <p class="text-4xl font-black text-blue-600" id="tstat-total">0</p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">หัวข้อที่สอน / เนื้อหา</label>
-                                <textarea id="log-topic" required rows="3" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                            <div class="glass p-6 rounded-2xl shadow-sm border-t-4 border-green-500 hover:shadow-md transition-all transform hover:-translate-y-1">
+                                <p class="text-sm text-slate-500 font-bold mb-1">มาเรียน</p>
+                                <p class="text-4xl font-black text-green-500" id="tstat-present">0</p>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-700 mb-1">ปัญหา / หมายเหตุ</label>
-                                <input type="text" id="log-notes" class="w-full border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <div class="glass p-6 rounded-2xl shadow-sm border-t-4 border-red-500 hover:shadow-md transition-all transform hover:-translate-y-1">
+                                <p class="text-sm text-slate-500 font-bold mb-1">ขาดเรียน</p>
+                                <p class="text-4xl font-black text-red-500" id="tstat-absent">0</p>
                             </div>
-                            <div class="flex justify-end gap-2 mt-2">
-                                <button type="button" onclick="resetLogForm()" class="px-4 py-2 rounded-lg text-slate-600 hover:bg-slate-100">ยกเลิก/ล้างฟอร์ม</button>
-                                <button type="submit" id="btn-save-log" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-indigo-700 transition shadow-sm">
-                                    <i class="fa-solid fa-save mr-2"></i> บันทึกข้อมูล
-                                </button>
+                            <div class="glass p-6 rounded-2xl shadow-sm border-t-4 border-yellow-500 hover:shadow-md transition-all transform hover:-translate-y-1">
+                                <p class="text-sm text-slate-500 font-bold mb-1">สาย / ลา</p>
+                                <p class="text-4xl font-black text-yellow-500" id="tstat-other">0</p>
                             </div>
-                        </form>
+                        </div>
                     </div>
 
-                    <h3 class="font-bold text-lg mb-4">ประวัติการสอน</h3>
-                    <div id="tlog-history" class="grid gap-4">
-                        <!-- Logs render here -->
+                    <!-- Attendance -->
+                    <div id="ttab-attendance" class="tab-content">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                            <h2 class="text-3xl font-bold text-indigo-900">เช็คชื่อนักเรียน</h2>
+                            <div class="flex items-center gap-3 bg-white px-4 py-2 rounded-xl shadow-sm border border-slate-200">
+                                <i class="fa-regular fa-calendar text-indigo-600"></i>
+                                <input type="date" id="att-date" class="font-medium focus:outline-none text-slate-700" onchange="loadTeacherAttendance()">
+                            </div>
+                        </div>
+                        <div class="glass rounded-2xl shadow-md overflow-hidden">
+                            <div class="max-h-[60vh] overflow-y-auto custom-scrollbar">
+                                <table class="w-full text-left border-collapse min-w-[700px] relative">
+                                    <thead class="sticky top-0 bg-indigo-50 z-10 shadow-sm">
+                                        <tr>
+                                            <th class="py-4 px-6 font-bold text-indigo-900 w-24 text-center">เลขที่</th>
+                                            <th class="py-4 px-6 font-bold text-indigo-900">ชื่อ - นามสกุล</th>
+                                            <th class="py-4 px-6 font-bold text-indigo-900 text-center">สถานะการเข้าเรียน</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="tstudent-list" class="divide-y divide-slate-100 bg-white">
+                                        <tr><td colspan="3" class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin text-2xl"></i> กำลังโหลดข้อมูล...</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="mt-6 flex justify-end">
+                            <button onclick="saveAttendance()" id="btn-save-attendance" class="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-8 py-3 rounded-xl font-bold hover:from-indigo-700 hover:to-blue-700 transition-all shadow-lg transform hover:-translate-y-1 text-lg flex items-center gap-2">
+                                <i class="fa-solid fa-floppy-disk"></i> บันทึกการเข้าเรียน
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Manage Leaves (NEW) -->
+                    <div id="ttab-leaves" class="tab-content">
+                        <h2 class="text-3xl font-bold text-indigo-900 mb-6">จัดการคำร้องขอลา (ทุกวิชา)</h2>
+                        <div id="t-leave-list" class="grid gap-4">
+                            <!-- Leave requests render here -->
+                        </div>
+                    </div>
+
+                    <!-- Teaching Logs -->
+                    <div id="ttab-teaching-log" class="tab-content">
+                        <h2 class="text-3xl font-bold text-indigo-900 mb-6">บันทึกการสอน</h2>
+                        
+                        <div class="glass rounded-2xl shadow-md p-8 mb-10 border-t-4 border-indigo-500">
+                            <h3 class="font-bold text-xl mb-6 text-indigo-800 flex items-center gap-2" id="log-form-title">
+                                <i class="fa-solid fa-pen-to-square"></i> เพิ่มบันทึกใหม่
+                            </h3>
+                            <form id="teaching-form" class="flex flex-col gap-5" onsubmit="saveTeachingLog(event)">
+                                <input type="hidden" id="log-id">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-700 mb-2">วันที่สอน</label>
+                                        <input type="date" id="log-date" required class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-0 focus:border-indigo-500 outline-none transition-colors font-medium">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-bold text-slate-700 mb-2">ปัญหา / หมายเหตุ</label>
+                                        <input type="text" id="log-notes" placeholder="เช่น นักเรียนไม่เข้าใจหัวข้อ..." class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-0 focus:border-indigo-500 outline-none transition-colors">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">หัวข้อที่สอน / เนื้อหา</label>
+                                    <textarea id="log-topic" required rows="3" placeholder="อธิบายเนื้อหาที่สอนอย่างละเอียด..." class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-0 focus:border-indigo-500 outline-none transition-colors"></textarea>
+                                </div>
+                                <div class="flex justify-end gap-3 mt-2">
+                                    <button type="button" onclick="resetLogForm()" class="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-slate-200 transition-colors">ล้างฟอร์ม</button>
+                                    <button type="submit" id="btn-save-log" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-md transform hover:-translate-y-1">
+                                        <i class="fa-solid fa-save mr-2"></i> บันทึกข้อมูล
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <h3 class="font-bold text-2xl mb-6 text-slate-800">ประวัติการสอน</h3>
+                        <div id="tlog-history" class="grid gap-6">
+                            <!-- Logs render here -->
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- STUDENT VIEW -->
-    <div id="student-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
-        <div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-                <h2 class="text-2xl font-bold text-slate-800">ข้อมูลของฉัน</h2>
-                <p class="text-emerald-600 font-medium text-lg" id="s-name-display"></p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="setStudentSubject('คณิตศาสตร์')" id="ssubject-math" class="px-4 py-2 rounded-lg font-medium bg-emerald-600 text-white">คณิตศาสตร์</button>
-                <button onclick="setStudentSubject('คอมพิวเตอร์')" id="ssubject-comp" class="px-4 py-2 rounded-lg font-medium bg-slate-100 text-slate-600 hover:bg-slate-200">คอมพิวเตอร์</button>
-            </div>
-        </div>
-
-        <div class="flex flex-col md:flex-row gap-6">
-            <!-- Sidebar -->
-            <div class="w-full md:w-64 flex-shrink-0">
-                <div class="bg-white rounded-xl shadow-sm border border-slate-100 p-4 flex flex-col gap-2">
-                    <button onclick="switchStudentTab('attendance')" id="sbtn-attendance" class="text-left px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 font-medium transition-colors">
-                        <i class="fa-solid fa-calendar-check w-6"></i> ประวัติเข้าเรียน
-                    </button>
-                    <button onclick="switchStudentTab('logs')" id="sbtn-logs" class="text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50">
-                        <i class="fa-solid fa-book w-6"></i> บันทึกการเรียน (เนื้อหา)
-                    </button>
+        <!-- STUDENT VIEW -->
+        <div id="student-view" class="view-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate__animated animate__fadeIn">
+            
+            <!-- Student Header -->
+            <div class="glass p-6 rounded-2xl shadow-md mb-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-l-4 border-emerald-500 relative overflow-hidden">
+                <!-- decorative background shape -->
+                <div class="absolute -right-10 -top-10 w-40 h-40 bg-emerald-100 rounded-full opacity-50"></div>
+                
+                <div class="relative z-10 flex items-center gap-4">
+                    <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center text-3xl shadow-inner">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider">ข้อมูลของฉัน</h2>
+                        <p class="text-emerald-700 font-black text-2xl" id="s-name-display"></p>
+                    </div>
+                </div>
+                <div class="relative z-10 flex gap-2 bg-slate-100 p-1.5 rounded-xl">
+                    <button onclick="setStudentSubject('คณิตศาสตร์')" id="ssubject-math" class="px-6 py-2.5 rounded-lg font-bold bg-emerald-600 text-white shadow-md transition-all">คณิตศาสตร์</button>
+                    <button onclick="setStudentSubject('คอมพิวเตอร์')" id="ssubject-comp" class="px-6 py-2.5 rounded-lg font-bold text-slate-600 hover:bg-slate-200 transition-all">คอมพิวเตอร์</button>
                 </div>
             </div>
 
-            <!-- Main Content -->
-            <div class="flex-1">
-                <!-- My Attendance -->
-                <div id="stab-attendance" class="tab-content active">
-                    <h2 class="text-xl font-bold mb-4">ประวัติการเข้าเรียนวิชา <span id="s-att-subject" class="text-emerald-600">คณิตศาสตร์</span></h2>
-                    <div class="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-50">
-                                <tr>
-                                    <th class="py-3 px-6 font-medium text-slate-600">วันที่</th>
-                                    <th class="py-3 px-6 font-medium text-slate-600">สถานะ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="s-att-list">
-                                <tr><td colspan="2" class="text-center py-4">กำลังโหลด...</td></tr>
-                            </tbody>
-                        </table>
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Sidebar -->
+                <div class="w-full lg:w-72 flex-shrink-0">
+                    <div class="glass rounded-2xl shadow-md p-5 flex flex-col gap-3 sticky top-24">
+                        <button onclick="switchStudentTab('attendance')" id="sbtn-attendance" class="text-left px-5 py-4 rounded-xl bg-emerald-50 text-emerald-700 font-bold transition-all flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-emerald-200 flex items-center justify-center"><i class="fa-solid fa-calendar-check"></i></div> ประวัติเข้าเรียน
+                        </button>
+                        <button onclick="switchStudentTab('leave')" id="sbtn-leave" class="text-left px-5 py-4 rounded-xl text-slate-600 font-bold transition-all hover:bg-slate-50 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-envelope-open-text"></i></div> ระบบส่งใบลา
+                        </button>
+                        <button onclick="switchStudentTab('logs')" id="sbtn-logs" class="text-left px-5 py-4 rounded-xl text-slate-600 font-bold transition-all hover:bg-slate-50 flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center"><i class="fa-solid fa-book"></i></div> ทบทวนบทเรียน
+                        </button>
                     </div>
                 </div>
 
-                <!-- My Class Logs -->
-                <div id="stab-logs" class="tab-content">
-                    <h2 class="text-xl font-bold mb-4">เนื้อหาที่เรียนวิชา <span id="s-log-subject" class="text-emerald-600">คณิตศาสตร์</span></h2>
-                    <div id="s-log-list" class="grid gap-4">
-                        <!-- Student Logs render here -->
+                <!-- Main Content -->
+                <div class="flex-1">
+                    <!-- My Attendance -->
+                    <div id="stab-attendance" class="tab-content active">
+                        <h2 class="text-3xl font-bold mb-6 text-emerald-900">ประวัติการเข้าเรียนวิชา <span id="s-att-subject" class="text-emerald-600 border-b-2 border-emerald-600">คณิตศาสตร์</span></h2>
+                        <div class="glass rounded-2xl shadow-md overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-emerald-50 border-b border-emerald-100">
+                                    <tr>
+                                        <th class="py-4 px-6 font-bold text-emerald-900">วันที่</th>
+                                        <th class="py-4 px-6 font-bold text-emerald-900 text-right">สถานะ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="s-att-list" class="divide-y divide-slate-100 bg-white">
+                                    <tr><td colspan="2" class="text-center py-8 text-slate-500"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลด...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Send Leave Request (NEW) -->
+                    <div id="stab-leave" class="tab-content">
+                        <h2 class="text-3xl font-bold mb-6 text-emerald-900">ระบบส่งใบลา</h2>
+                        
+                        <div class="glass rounded-2xl shadow-md p-8 mb-10 border-t-4 border-yellow-500">
+                            <h3 class="font-bold text-xl mb-6 text-slate-800"><i class="fa-solid fa-paper-plane text-yellow-500 mr-2"></i> เขียนใบลาใหม่</h3>
+                            <form onsubmit="submitLeaveRequest(event)" class="flex flex-col gap-5">
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">วันที่ต้องการลา</label>
+                                    <input type="date" id="leave-date" required class="w-full md:w-1/2 border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-0 focus:border-yellow-500 outline-none font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-bold text-slate-700 mb-2">เหตุผลการลา</label>
+                                    <textarea id="leave-reason" required rows="3" placeholder="ระบุเหตุผล เช่น ป่วยเป็นไข้, ลากิจไปทำธุระครอบครัว..." class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 focus:ring-0 focus:border-yellow-500 outline-none"></textarea>
+                                </div>
+                                <div class="flex justify-end mt-2">
+                                    <button type="submit" class="bg-yellow-500 text-white px-8 py-3 rounded-xl font-bold hover:bg-yellow-600 transition-all shadow-md transform hover:-translate-y-1">
+                                        ส่งคำร้องขอลา
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <h3 class="font-bold text-2xl mb-6 text-slate-800">ประวัติการลาของฉัน</h3>
+                        <div id="s-leave-list" class="grid gap-4">
+                            <!-- Student leave history -->
+                        </div>
+                    </div>
+
+                    <!-- My Class Logs -->
+                    <div id="stab-logs" class="tab-content">
+                        <h2 class="text-3xl font-bold mb-6 text-emerald-900">ทบทวนเนื้อหาวิชา <span id="s-log-subject" class="text-emerald-600 border-b-2 border-emerald-600">คณิตศาสตร์</span></h2>
+                        <div id="s-log-list" class="grid gap-6">
+                            <!-- Student Logs render here -->
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <!-- Toast -->
-    <div id="toast" class="fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-2 z-50">
-        <i class="fa-solid fa-circle-check"></i> <span id="toast-msg"></span>
-    </div>
+    <!-- FOOTER (NEW) -->
+    <footer class="mt-12 bg-slate-900 text-slate-400 py-8 border-t-4 border-indigo-500">
+        <div class="max-w-7xl mx-auto px-4 text-center">
+            <h3 class="text-xl font-bold text-white mb-2">วิทยาลัยพณิชยการเชตุพน</h3>
+            <p class="mb-4">ระบบบริหารจัดการชั้นเรียน (นวัตกรรมเพื่อการศึกษา)</p>
+            <div class="inline-block bg-slate-800 px-6 py-2 rounded-full border border-slate-700">
+                <p class="text-sm text-slate-300"><i class="fa-solid fa-code text-indigo-400 mr-2"></i>ออกแบบโดย <span class="text-white font-bold tracking-wide">นายณัฐภัทร พึ่งสาย</span></p>
+            </div>
+        </div>
+    </footer>
 
     <script>
         // Supabase Config
         const SUPABASE_URL = 'https://inepufnwfdccwsyablws.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImluZXB1Zm53ZmRjY3dzeWFibHdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA2ODE4NjQsImV4cCI6MjEwNjI1Nzg2NH0.BTR4d5BNi7I-_m8SQvyCCqNIul2AeNIIF02OvDUDuMw';
-        
-        // BUG FIX: changed variable name from 'supabase' to 'db' to prevent shadowing the global 'supabase' object from CDN.
         const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // SweetAlert Toast Setup
+        const Toast = Swal.mixin({
+            toast: true, position: 'top-end', showConfirmButton: false, timer: 3000,
+            timerProgressBar: true, didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer)
+                toast.addEventListener('mouseleave', Swal.resumeTimer)
+            }
+        });
 
         // Global State
         let allStudents = [];
@@ -278,54 +388,86 @@
         const todayStr = new Date().toISOString().split('T')[0];
         document.getElementById('att-date').value = todayStr;
         document.getElementById('log-date').value = todayStr;
+        document.getElementById('leave-date').value = todayStr;
 
-        // Init
+        // Init App
         async function initApp() {
             try {
                 const { data, error } = await db.from('students').select('*').order('student_number');
                 if (error) throw error;
                 allStudents = data || [];
-                
-                // Populate student dropdown
                 const select = document.getElementById('student-login-select');
-                select.innerHTML = '<option value="">-- เลือกชื่อของตนเอง --</option>' + 
+                select.innerHTML = '<option value="">-- กรุณาเลือกชื่อของตนเอง --</option>' + 
                     allStudents.map(s => `<option value="${s.id}">เลขที่ ${s.student_number} ${s.name}</option>`).join('');
             } catch (e) {
-                console.error("Init Error:", e);
-                alert("ไม่สามารถโหลดข้อมูลฐานข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่อ");
+                console.error(e);
+                Swal.fire('ข้อผิดพลาด!', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error');
             }
         }
-        
-        // Start app
         initApp();
 
-        // --- AUTH & ROLES ---
+        // --- AUTH & ROLES (WITH PASSWORD) ---
+        function attemptTeacherLogin() {
+            Swal.fire({
+                title: 'เข้าสู่ระบบครูผู้สอน',
+                input: 'password',
+                inputLabel: 'รหัสผ่านสำหรับการทดสอบคือ 1234',
+                inputPlaceholder: 'กรอกรหัสผ่าน...',
+                showCancelButton: true,
+                confirmButtonText: 'เข้าสู่ระบบ',
+                cancelButtonText: 'ยกเลิก',
+                confirmButtonColor: '#4f46e5',
+                inputAttributes: { maxlength: 10, autocapitalize: 'off', autocorrect: 'off' }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (result.value === '1234') loginTeacher();
+                    else Swal.fire('รหัสผ่านไม่ถูกต้อง!', 'กรุณาลองใหม่อีกครั้ง (รหัสคือ 1234)', 'error');
+                }
+            });
+        }
+
+        function attemptStudentLogin() {
+            const sid = document.getElementById('student-login-select').value;
+            const pass = document.getElementById('student-login-password').value;
+            
+            if (!sid) return Swal.fire('แจ้งเตือน', 'กรุณาเลือกชื่อของตนเองก่อน', 'warning');
+            if (pass !== '1234') return Swal.fire('รหัสผ่านผิด!', 'รหัสผ่านสำหรับการทดสอบคือ 1234', 'error');
+            
+            loginStudent(parseInt(sid));
+            document.getElementById('student-login-password').value = ''; // clear
+        }
+
         function loginTeacher() {
             document.getElementById('auth-view').classList.remove('active');
             document.getElementById('teacher-view').classList.add('active');
             document.getElementById('nav-user').classList.remove('hidden');
-            document.getElementById('nav-user-name').innerHTML = '<i class="fa-solid fa-chalkboard-user mr-1"></i> ระบบครูผู้สอน';
+            document.getElementById('nav-user-name').innerHTML = '<i class="fa-solid fa-chalkboard-user mr-2"></i>ครูผู้สอน';
             document.getElementById('nav-title').textContent = 'Teacher Portal';
+            
+            Toast.fire({ icon: 'success', title: 'เข้าสู่ระบบสำเร็จ' });
+            
             loadTeacherDashboard();
             loadTeacherAttendance();
             loadTeacherLogs();
+            loadAllLeaveRequests(); // Load leaves for badge
         }
 
-        function loginStudent() {
-            const sid = document.getElementById('student-login-select').value;
-            if (!sid) return alert("กรุณาเลือกชื่อนักเรียนก่อน");
-            currentStudentId = parseInt(sid);
+        function loginStudent(sid) {
+            currentStudentId = sid;
             const std = allStudents.find(s => s.id === currentStudentId);
 
             document.getElementById('auth-view').classList.remove('active');
             document.getElementById('student-view').classList.add('active');
             document.getElementById('nav-user').classList.remove('hidden');
-            document.getElementById('nav-user-name').innerHTML = `<i class="fa-solid fa-user-graduate mr-1"></i> นักเรียน: ${std.name}`;
+            document.getElementById('nav-user-name').innerHTML = `<i class="fa-solid fa-user-graduate mr-2"></i>${std.name.split(' ')[1]}`;
             document.getElementById('nav-title').textContent = 'Student Portal';
             document.getElementById('s-name-display').textContent = `เลขที่ ${std.student_number} - ${std.name}`;
             
+            Toast.fire({ icon: 'success', title: 'ยินดีต้อนรับนักเรียน' });
+            
             loadStudentAttendance();
             loadStudentLogs();
+            loadStudentLeaveRequests();
         }
 
         function logout() {
@@ -339,8 +481,8 @@
         // --- TEACHER VIEW LOGIC ---
         function setTeacherSubject(subj) {
             teacherSubject = subj;
-            document.getElementById('tsubject-math').className = `px-4 py-2 rounded-lg font-medium ${subj==='คณิตศาสตร์'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
-            document.getElementById('tsubject-comp').className = `px-4 py-2 rounded-lg font-medium ${subj==='คอมพิวเตอร์'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+            document.getElementById('tsubject-math').className = `px-6 py-2.5 rounded-lg font-bold transition-all shadow-md ${subj==='คณิตศาสตร์'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200 shadow-none'}`;
+            document.getElementById('tsubject-comp').className = `px-6 py-2.5 rounded-lg font-bold transition-all shadow-md ${subj==='คอมพิวเตอร์'?'bg-indigo-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200 shadow-none'}`;
             
             document.getElementById('dash-subject').textContent = subj;
             document.getElementById('att-subject').textContent = subj;
@@ -353,20 +495,27 @@
 
         function switchTeacherTab(tabId) {
             document.querySelectorAll('#teacher-view .tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('[id^="tbtn-"]').forEach(btn => btn.className = "text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50");
+            document.querySelectorAll('[id^="tbtn-"]').forEach(btn => btn.className = "text-left px-5 py-4 rounded-xl text-slate-600 font-bold transition-all hover:bg-slate-50 flex items-center gap-3");
             document.getElementById('ttab-' + tabId).classList.add('active');
-            document.getElementById('tbtn-' + tabId).className = "text-left px-4 py-3 rounded-lg bg-indigo-50 text-indigo-700 font-medium transition-colors hover:bg-indigo-50";
+            
+            const activeBtn = document.getElementById('tbtn-' + tabId);
+            activeBtn.className = "text-left px-5 py-4 rounded-xl bg-indigo-50 text-indigo-700 font-bold transition-all flex items-center gap-3 shadow-inner";
+            
+            // Adjust icon colors inside button
+            document.querySelectorAll('[id^="tbtn-"] div').forEach(div => div.className = "w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center");
+            activeBtn.querySelector('div').className = "w-8 h-8 rounded-full bg-indigo-200 flex items-center justify-center text-indigo-700";
+            
             if(tabId === 'dashboard') loadTeacherDashboard();
+            if(tabId === 'leaves') loadAllLeaveRequests();
         }
 
+        // Attendance
         async function loadTeacherAttendance() {
             const date = document.getElementById('att-date').value;
             attendanceState = {};
             try {
                 const { data } = await db.from('attendance').select('*').eq('date', date).eq('subject', teacherSubject);
-                if (data) {
-                    data.forEach(d => attendanceState[d.student_id] = d.status);
-                }
+                if (data) data.forEach(d => attendanceState[d.student_id] = d.status);
                 renderTeacherStudentList();
             } catch (e) { console.error(e); }
         }
@@ -376,15 +525,19 @@
             tbody.innerHTML = allStudents.map(s => {
                 if (!attendanceState[s.id]) attendanceState[s.id] = 'present';
                 const status = attendanceState[s.id];
+                
+                const btnClass = (match, bgActive, textActive) => 
+                    `px-4 py-1.5 rounded-full text-sm font-bold transition-all transform hover:scale-105 ${status === match ? bgActive + ' text-white shadow-md ring-2 ring-offset-1 ' + textActive.replace('text-','ring-') : 'bg-slate-100 ' + textActive + ' hover:bg-slate-200'}`;
+
                 return `
-                <tr class="border-b border-slate-100 hover:bg-slate-50">
-                    <td class="py-2 px-6 text-slate-600 font-medium">${s.student_number}</td>
-                    <td class="py-2 px-6">${s.name}</td>
-                    <td class="py-2 px-6 flex justify-center gap-1">
-                        <button onclick="setTStatus(${s.id}, 'present')" class="px-3 py-1 rounded text-sm font-medium transition ${status === 'present' ? 'bg-green-600 text-white' : 'bg-green-50 text-green-700'}">มา</button>
-                        <button onclick="setTStatus(${s.id}, 'absent')" class="px-3 py-1 rounded text-sm font-medium transition ${status === 'absent' ? 'bg-red-600 text-white' : 'bg-red-50 text-red-700'}">ขาด</button>
-                        <button onclick="setTStatus(${s.id}, 'late')" class="px-3 py-1 rounded text-sm font-medium transition ${status === 'late' ? 'bg-yellow-500 text-white' : 'bg-yellow-50 text-yellow-700'}">สาย</button>
-                        <button onclick="setTStatus(${s.id}, 'leave')" class="px-3 py-1 rounded text-sm font-medium transition ${status === 'leave' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'}">ลา</button>
+                <tr class="hover:bg-indigo-50/50 transition-colors">
+                    <td class="py-3 px-6 text-indigo-900 font-bold text-center border-b border-slate-100">${s.student_number}</td>
+                    <td class="py-3 px-6 font-medium text-slate-700 border-b border-slate-100">${s.name}</td>
+                    <td class="py-3 px-6 flex justify-center gap-2 border-b border-slate-100">
+                        <button onclick="setTStatus(${s.id}, 'present')" class="${btnClass('present','bg-green-500','text-green-600')}"><i class="fa-solid fa-check mr-1"></i>มา</button>
+                        <button onclick="setTStatus(${s.id}, 'absent')" class="${btnClass('absent','bg-red-500','text-red-600')}"><i class="fa-solid fa-xmark mr-1"></i>ขาด</button>
+                        <button onclick="setTStatus(${s.id}, 'late')" class="${btnClass('late','bg-yellow-500','text-yellow-600')}"><i class="fa-solid fa-clock mr-1"></i>สาย</button>
+                        <button onclick="setTStatus(${s.id}, 'leave')" class="${btnClass('leave','bg-blue-500','text-blue-600')}"><i class="fa-solid fa-envelope mr-1"></i>ลา</button>
                     </td>
                 </tr>`;
             }).join('');
@@ -397,18 +550,24 @@
 
         async function saveAttendance() {
             const date = document.getElementById('att-date').value;
-            const records = allStudents.map(s => ({
-                student_id: s.id, date: date, subject: teacherSubject, status: attendanceState[s.id]
-            }));
-            
+            const btn = document.getElementById('btn-save-attendance');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
+            const records = allStudents.map(s => ({ student_id: s.id, date: date, subject: teacherSubject, status: attendanceState[s.id] }));
             try {
                 await db.from('attendance').delete().eq('date', date).eq('subject', teacherSubject);
                 await db.from('attendance').insert(records);
-                showToast('บันทึกการเข้าเรียนสำเร็จ');
+                Toast.fire({ icon: 'success', title: 'บันทึกการเข้าเรียนสำเร็จ' });
                 loadTeacherDashboard();
-            } catch(e) { console.error(e); showToast('ผิดพลาด', true); }
+            } catch(e) { Toast.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด' }); }
+            
+            btn.innerHTML = originalHTML;
+            btn.disabled = false;
         }
 
+        // Dashboard
         async function loadTeacherDashboard() {
             document.getElementById('tstat-total').textContent = allStudents.length;
             const date = document.getElementById('att-date').value;
@@ -424,27 +583,28 @@
             } catch(e) {}
         }
 
+        // Teaching Logs
         async function loadTeacherLogs() {
             try {
                 const { data } = await db.from('teaching_logs').select('*').eq('subject', teacherSubject).order('date', {ascending: false});
                 const container = document.getElementById('tlog-history');
                 if(!data || data.length===0) {
-                    container.innerHTML = '<p class="text-slate-500">ยังไม่มีบันทึกการสอน</p>'; return;
+                    container.innerHTML = '<div class="glass p-8 text-center text-slate-500 rounded-2xl"><i class="fa-solid fa-folder-open text-4xl mb-3 text-slate-300"></i><br>ยังไม่มีบันทึกการสอน</div>'; return;
                 }
                 container.innerHTML = data.map(log => {
-                    const escTopic = log.topic.replace(/'/g, "\\'");
-                    const escNotes = (log.notes||'').replace(/'/g, "\\'");
+                    const escTopic = log.topic.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                    const escNotes = (log.notes||'').replace(/'/g, "\\'").replace(/"/g, "&quot;");
                     return `
-                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm relative group">
-                        <div class="flex justify-between mb-2">
-                            <span class="font-bold text-indigo-700">${log.date}</span>
-                            <div>
-                                <button onclick="editLog(${log.id}, '${log.date}', '${escTopic}', '${escNotes}')" class="text-slate-400 hover:text-indigo-600 mr-2"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="deleteLog(${log.id})" class="text-slate-400 hover:text-red-600"><i class="fa-solid fa-trash"></i></button>
+                    <div class="glass p-6 rounded-2xl border-l-4 border-indigo-500 shadow-sm hover:shadow-md transition-shadow relative group">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="font-bold text-indigo-700 bg-indigo-50 px-3 py-1 rounded-lg text-sm"><i class="fa-regular fa-calendar mr-1"></i> ${log.date}</span>
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                                <button onclick="editLog(${log.id}, '${log.date}', '${escTopic}', '${escNotes}')" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-600 flex items-center justify-center transition-colors"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="deleteLog(${log.id})" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 hover:bg-red-100 hover:text-red-600 flex items-center justify-center transition-colors"><i class="fa-solid fa-trash"></i></button>
                             </div>
                         </div>
-                        <h4 class="font-bold text-lg mb-1">${log.topic}</h4>
-                        <p class="text-slate-600 text-sm">${log.notes || '-'}</p>
+                        <h4 class="font-bold text-xl mb-2 text-slate-800">${log.topic}</h4>
+                        ${log.notes ? `<p class="text-slate-600 bg-slate-50 p-3 rounded-xl text-sm border border-slate-100"><i class="fa-solid fa-circle-info text-indigo-400 mr-2"></i>${log.notes}</p>` : ''}
                     </div>
                 `}).join('');
             } catch(e) {}
@@ -455,15 +615,15 @@
             document.getElementById('log-date').value = date;
             document.getElementById('log-topic').value = topic;
             document.getElementById('log-notes').value = notes;
-            document.getElementById('log-form-title').textContent = "แก้ไขบันทึก";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            document.getElementById('log-form-title').innerHTML = '<i class="fa-solid fa-pen text-indigo-600"></i> แก้ไขบันทึกการสอน';
+            document.getElementById('ttab-teaching-log').scrollIntoView({ behavior: 'smooth' });
         }
 
         function resetLogForm() {
             document.getElementById('teaching-form').reset();
             document.getElementById('log-id').value = '';
             document.getElementById('log-date').value = todayStr;
-            document.getElementById('log-form-title').textContent = "เพิ่มบันทึกใหม่";
+            document.getElementById('log-form-title').innerHTML = '<i class="fa-solid fa-pen-to-square"></i> เพิ่มบันทึกใหม่';
         }
 
         async function saveTeachingLog(e) {
@@ -476,27 +636,87 @@
                 notes: document.getElementById('log-notes').value
             };
             try {
-                if(id) { await db.from('teaching_logs').update(logData).eq('id', id); }
-                else { await db.from('teaching_logs').insert([logData]); }
-                showToast('บันทึกสำเร็จ');
+                if(id) await db.from('teaching_logs').update(logData).eq('id', id);
+                else await db.from('teaching_logs').insert([logData]);
+                Toast.fire({ icon: 'success', title: 'บันทึกข้อมูลสำเร็จ' });
                 resetLogForm();
                 loadTeacherLogs();
-            } catch(e) { showToast('ผิดพลาด', true); }
+            } catch(e) { Toast.fire({ icon: 'error', title: 'ผิดพลาด' }); }
         }
 
         async function deleteLog(id) {
-            if(confirm("ต้องการลบข้อบันทึกนี้หรือไม่?")) {
-                await db.from('teaching_logs').delete().eq('id', id);
-                showToast('ลบสำเร็จ');
-                loadTeacherLogs();
-            }
+            Swal.fire({
+                title: 'ยืนยันการลบ?', text: "คุณต้องการลบบันทึกการสอนนี้ใช่หรือไม่", icon: 'warning',
+                showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#94a3b8',
+                confirmButtonText: 'ใช่, ลบเลย!', cancelButtonText: 'ยกเลิก'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    await db.from('teaching_logs').delete().eq('id', id);
+                    Toast.fire({ icon: 'success', title: 'ลบสำเร็จ' });
+                    loadTeacherLogs();
+                }
+            })
+        }
+
+        // Leave Requests (Teacher)
+        async function loadAllLeaveRequests() {
+            try {
+                // Fetch leave requests and join with students table manually if needed, or use Supabase join
+                const { data } = await db.from('leave_requests').select(`*, students ( name, student_number )`).order('date', {ascending: false});
+                const container = document.getElementById('t-leave-list');
+                const badge = document.getElementById('t-leave-badge');
+                
+                if(!data || data.length === 0) {
+                    badge.classList.add('hidden');
+                    container.innerHTML = '<div class="glass p-8 text-center text-slate-500 rounded-2xl">ไม่มีคำร้องขอลา</div>'; return;
+                }
+
+                const pendingCount = data.filter(r => r.status === 'รออนุมัติ').length;
+                if(pendingCount > 0) {
+                    badge.textContent = pendingCount; badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+
+                container.innerHTML = data.map(req => {
+                    let statusHtml = '';
+                    if(req.status === 'รออนุมัติ') statusHtml = `<span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-bold"><i class="fa-solid fa-hourglass-half mr-1"></i>รออนุมัติ</span>`;
+                    else if(req.status === 'อนุมัติแล้ว') statusHtml = `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold"><i class="fa-solid fa-check mr-1"></i>อนุมัติแล้ว</span>`;
+                    else statusHtml = `<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold"><i class="fa-solid fa-xmark mr-1"></i>ไม่อนุมัติ</span>`;
+
+                    return `
+                    <div class="glass p-5 rounded-2xl shadow-sm border-l-4 ${req.status==='รออนุมัติ'?'border-yellow-500':(req.status==='อนุมัติแล้ว'?'border-green-500':'border-red-500')} flex flex-col md:flex-row justify-between md:items-center gap-4">
+                        <div>
+                            <div class="flex items-center gap-3 mb-2">
+                                <span class="font-bold text-slate-800 text-lg">เลขที่ ${req.students.student_number} ${req.students.name}</span>
+                                ${statusHtml}
+                            </div>
+                            <p class="text-sm text-slate-500 mb-1"><i class="fa-regular fa-calendar mr-2"></i>วันที่ขอลา: <span class="font-medium text-slate-700">${req.date}</span></p>
+                            <p class="text-sm text-slate-600 bg-slate-50 p-2 rounded-lg border border-slate-100">เหตุผล: ${req.reason}</p>
+                        </div>
+                        ${req.status === 'รออนุมัติ' ? `
+                        <div class="flex gap-2">
+                            <button onclick="updateLeaveStatus(${req.id}, 'อนุมัติแล้ว')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-bold transition-all shadow-md transform hover:-translate-y-1"><i class="fa-solid fa-check mr-1"></i> อนุมัติ</button>
+                            <button onclick="updateLeaveStatus(${req.id}, 'ไม่อนุมัติ')" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl font-bold transition-all shadow-md transform hover:-translate-y-1"><i class="fa-solid fa-xmark mr-1"></i> ปฏิเสธ</button>
+                        </div>` : ''}
+                    </div>`;
+                }).join('');
+            } catch(e) { console.error(e); }
+        }
+
+        async function updateLeaveStatus(id, status) {
+            try {
+                await db.from('leave_requests').update({status}).eq('id', id);
+                Toast.fire({ icon: 'success', title: 'อัปเดตสถานะสำเร็จ' });
+                loadAllLeaveRequests();
+            } catch(e) { Toast.fire({ icon: 'error', title: 'ผิดพลาด' }); }
         }
 
         // --- STUDENT VIEW LOGIC ---
         function setStudentSubject(subj) {
             studentSubject = subj;
-            document.getElementById('ssubject-math').className = `px-4 py-2 rounded-lg font-medium ${subj==='คณิตศาสตร์'?'bg-emerald-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
-            document.getElementById('ssubject-comp').className = `px-4 py-2 rounded-lg font-medium ${subj==='คอมพิวเตอร์'?'bg-emerald-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200'}`;
+            document.getElementById('ssubject-math').className = `px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${subj==='คณิตศาสตร์'?'bg-emerald-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200 shadow-none'}`;
+            document.getElementById('ssubject-comp').className = `px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${subj==='คอมพิวเตอร์'?'bg-emerald-600 text-white':'bg-slate-100 text-slate-600 hover:bg-slate-200 shadow-none'}`;
             document.getElementById('s-att-subject').textContent = subj;
             document.getElementById('s-log-subject').textContent = subj;
             loadStudentAttendance();
@@ -505,9 +725,14 @@
 
         function switchStudentTab(tabId) {
             document.querySelectorAll('#student-view .tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('[id^="sbtn-"]').forEach(btn => btn.className = "text-left px-4 py-3 rounded-lg text-slate-600 font-medium transition-colors hover:bg-slate-50");
+            document.querySelectorAll('[id^="sbtn-"]').forEach(btn => btn.className = "text-left px-5 py-4 rounded-xl text-slate-600 font-bold transition-all hover:bg-slate-50 flex items-center gap-3");
             document.getElementById('stab-' + tabId).classList.add('active');
-            document.getElementById('sbtn-' + tabId).className = "text-left px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700 font-medium transition-colors";
+            
+            const activeBtn = document.getElementById('sbtn-' + tabId);
+            activeBtn.className = "text-left px-5 py-4 rounded-xl bg-emerald-50 text-emerald-700 font-bold transition-all flex items-center gap-3 shadow-inner";
+            
+            document.querySelectorAll('[id^="sbtn-"] div').forEach(div => div.className = "w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center");
+            activeBtn.querySelector('div').className = "w-8 h-8 rounded-full bg-emerald-200 flex items-center justify-center text-emerald-700";
         }
 
         async function loadStudentAttendance() {
@@ -515,18 +740,18 @@
             try {
                 const { data } = await db.from('attendance').select('*').eq('student_id', currentStudentId).eq('subject', studentSubject).order('date', {ascending: false});
                 if(!data || data.length===0) {
-                    tbody.innerHTML = `<tr><td colspan="2" class="text-center py-4 text-slate-500">ไม่มีประวัติ</td></tr>`; return;
+                    tbody.innerHTML = `<tr><td colspan="2" class="text-center py-8 text-slate-500">ไม่มีประวัติการเข้าเรียน</td></tr>`; return;
                 }
                 const badges = {
-                    'present': '<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">มาเรียน</span>',
-                    'absent': '<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium">ขาด</span>',
-                    'late': '<span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-medium">สาย</span>',
-                    'leave': '<span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">ลา</span>'
+                    'present': '<span class="bg-green-100 text-green-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm"><i class="fa-solid fa-check mr-1"></i> มาเรียน</span>',
+                    'absent': '<span class="bg-red-100 text-red-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm"><i class="fa-solid fa-xmark mr-1"></i> ขาด</span>',
+                    'late': '<span class="bg-yellow-100 text-yellow-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm"><i class="fa-solid fa-clock mr-1"></i> สาย</span>',
+                    'leave': '<span class="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm"><i class="fa-solid fa-envelope mr-1"></i> ลา</span>'
                 };
                 tbody.innerHTML = data.map(d => `
-                    <tr class="border-b border-slate-100 hover:bg-slate-50">
-                        <td class="py-3 px-6 font-medium">${d.date}</td>
-                        <td class="py-3 px-6">${badges[d.status]}</td>
+                    <tr class="hover:bg-emerald-50/50 transition-colors">
+                        <td class="py-4 px-6 font-bold text-slate-700"><i class="fa-regular fa-calendar text-emerald-500 mr-2"></i>${d.date}</td>
+                        <td class="py-4 px-6 text-right">${badges[d.status]}</td>
                     </tr>
                 `).join('');
             } catch(e) {}
@@ -537,24 +762,57 @@
             try {
                 const { data } = await db.from('teaching_logs').select('*').eq('subject', studentSubject).order('date', {ascending: false});
                 if(!data || data.length===0) {
-                    container.innerHTML = '<p class="text-slate-500">ไม่มีข้อมูลเนื้อหา</p>'; return;
+                    container.innerHTML = '<div class="glass p-8 text-center text-slate-500 rounded-2xl">ไม่มีข้อมูลเนื้อหา</div>'; return;
                 }
                 container.innerHTML = data.map(log => `
-                    <div class="bg-white p-5 rounded-xl border border-emerald-100 shadow-sm">
-                        <span class="text-sm font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full">${log.date}</span>
-                        <h4 class="font-bold text-lg mt-3 mb-2">${log.topic}</h4>
-                        <p class="text-slate-600 text-sm"><i class="fa-solid fa-circle-info text-slate-400 mr-1"></i> ${log.notes || '-'}</p>
+                    <div class="glass p-6 rounded-2xl shadow-sm border-t-4 border-emerald-400 hover:shadow-md transition-shadow">
+                        <span class="text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-lg"><i class="fa-regular fa-calendar mr-1"></i> ${log.date}</span>
+                        <h4 class="font-bold text-xl mt-4 mb-2 text-slate-800">${log.topic}</h4>
+                        ${log.notes ? `<p class="text-slate-600 bg-slate-50 p-4 rounded-xl text-sm leading-relaxed border border-slate-100"><i class="fa-solid fa-circle-info text-emerald-500 mr-2"></i> ${log.notes}</p>` : ''}
                     </div>
                 `).join('');
             } catch(e) {}
         }
 
-        // Toasts
-        function showToast(msg, error=false) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').textContent = msg;
-            toast.className = `fixed bottom-4 right-4 text-white px-6 py-3 rounded-lg shadow-lg transform flex items-center gap-2 z-50 transition-all duration-300 ${error?'bg-red-600':'bg-green-600'} translate-y-0 opacity-100`;
-            setTimeout(() => { toast.classList.remove('translate-y-0', 'opacity-100'); toast.classList.add('translate-y-20', 'opacity-0'); }, 3000);
+        // Student Leave System
+        async function submitLeaveRequest(e) {
+            e.preventDefault();
+            const date = document.getElementById('leave-date').value;
+            const reason = document.getElementById('leave-reason').value;
+            
+            try {
+                await db.from('leave_requests').insert([{ student_id: currentStudentId, date, reason }]);
+                Swal.fire('สำเร็จ!', 'ส่งใบลาเรียบร้อยแล้ว รอคุณครูอนุมัติ', 'success');
+                document.getElementById('leave-reason').value = '';
+                loadStudentLeaveRequests();
+            } catch(e) { Swal.fire('ผิดพลาด', 'ไม่สามารถส่งใบลาได้', 'error'); }
+        }
+
+        async function loadStudentLeaveRequests() {
+            try {
+                const { data } = await db.from('leave_requests').select('*').eq('student_id', currentStudentId).order('date', {ascending: false});
+                const container = document.getElementById('s-leave-list');
+                
+                if(!data || data.length === 0) {
+                    container.innerHTML = '<div class="glass p-8 text-center text-slate-500 rounded-2xl">ไม่มีประวัติการส่งใบลา</div>'; return;
+                }
+
+                container.innerHTML = data.map(req => {
+                    let statusHtml = '';
+                    if(req.status === 'รออนุมัติ') statusHtml = `<span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-bold"><i class="fa-solid fa-hourglass-half mr-1"></i>รออนุมัติ</span>`;
+                    else if(req.status === 'อนุมัติแล้ว') statusHtml = `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold"><i class="fa-solid fa-check mr-1"></i>อนุมัติแล้ว</span>`;
+                    else statusHtml = `<span class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold"><i class="fa-solid fa-xmark mr-1"></i>ไม่อนุมัติ</span>`;
+
+                    return `
+                    <div class="glass p-5 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-slate-700 mb-1"><i class="fa-regular fa-calendar text-emerald-500 mr-2"></i>${req.date}</p>
+                            <p class="text-sm text-slate-500">เหตุผล: ${req.reason}</p>
+                        </div>
+                        <div>${statusHtml}</div>
+                    </div>`;
+                }).join('');
+            } catch(e) {}
         }
     </script>
 </body>
