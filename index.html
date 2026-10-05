@@ -313,6 +313,8 @@
             document.getElementById('auth-view').classList.remove('active'); document.getElementById('app-view').classList.add('active'); document.getElementById('nav-user').classList.remove('hidden');
             const menu = document.getElementById('sidebar-menu');
             
+            const teacherEls = ['btn-add-announce','btn-add-lesson','btn-add-res','btn-add-hw','att-teacher-actions','log-form-container'];
+            
             if(isTeacher) {
                 document.getElementById('nav-user-name').innerHTML = '<i class="fa-solid fa-chalkboard-user mr-1"></i> ครูผู้สอน';
                 document.getElementById('nav-points-badge').style.display = 'none';
@@ -328,7 +330,8 @@
                     <button onclick="switchTab('logs')" id="btn-logs" class="nav-btn"><i class="fa-solid fa-book-open w-6 text-cyan-500"></i> บันทึกสอน</button>
                 `;
                 document.getElementById('dash-teacher').classList.remove('hidden'); document.getElementById('dash-student').classList.add('hidden');
-                ['btn-add-announce','btn-add-lesson','btn-add-res','btn-add-hw','att-teacher-actions','log-form-container'].forEach(id=>document.getElementById(id).classList.remove('hidden'));
+                teacherEls.forEach(id=>document.getElementById(id).classList.remove('hidden'));
+                document.getElementById('leave-form-container').classList.add('hidden');
             } else {
                 const std = allStudents.find(s => s.id === studentId);
                 document.getElementById('nav-user-name').innerHTML = `<i class="fa-solid fa-user-graduate mr-1"></i> ${std.name.split(' ')[0]}`;
@@ -344,6 +347,7 @@
                     <button onclick="switchTab('logs')" id="btn-logs" class="nav-btn"><i class="fa-solid fa-clock-rotate-left w-6 text-cyan-500"></i> ทบทวน</button>
                 `;
                 document.getElementById('dash-student').classList.remove('hidden'); document.getElementById('dash-teacher').classList.add('hidden');
+                teacherEls.forEach(id=>document.getElementById(id).classList.add('hidden'));
                 document.getElementById('leave-form-container').classList.remove('hidden');
                 loadStudentPoints();
             }
